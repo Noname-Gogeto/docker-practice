@@ -1,0 +1,69 @@
+#NETWORK
+networks:
+  d-net:
+    name: d-net
+    driver: bridge
+
+#VOLUMES
+volumes:
+  d-volume:
+    name: d-volume
+    driver: local
+    labels:
+      - "com.example.description=This volume is used for PHP and HTTPD"      
+    driver_opts:
+      device: ./core/web/
+      type: none
+      o: bind
+
+#SERVICES
+services:
+  # container PHP
+  d-php:
+    container_name: d-php
+    build:
+      dockerfile: php.Dockerfile
+      context: ./core/php/
+    image: "dphp:latest"
+    hostname: d-php
+    restart: always
+    networks:
+      - d-net
+    volumes:
+      - d-volume:/home/web/
+
+  # container HTTPD
+  d-httpd:
+    container_name: d-httpd
+    image: "httpd:latest"
+    hostname: d-httpd
+    restart: always
+    networks:
+      - d-net
+    volumes:
+      - d-volume:/home/web/
+      - ./httpd.conf:/usr/local/apache2/conf/httpd.conf
+    ports:
+      - "8080:80"
+      - "443:443"
+
+  # container MYSQL
+  d-mysql:
+    container_name: d-mysql
+    image: "mysql:latest"
+    hostname: d-mysql
+    restart: always
+    networks:
+      - d-net
+    volumes:
+      - ./core/data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/my.cnf
+    environment:
+      - MYSQL_ROOT_PASSWORD=123
+      - MYSQL_DATABASE=jl_web
+      - MYSQL_USER=jl_admin
+      - MYSQL_PASSWORD=123
+    # ports:
+    #   - "3306:3306"
+
+    
